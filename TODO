@@ -1,0 +1,5 @@
+* don't panic when xees is not running:
+
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: D-Bus error: The name net.andresovi.xees was not provided by any .service files (org.freedesktop.DBus.Error.ServiceUnknown)', libcore/result.rs:1009:5
+note: Run with `RUST_BACKTRACE=1` for a backtrace.
+

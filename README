@@ -1,0 +1,4 @@
+A tiny application that allows to disable/enable xscreensaver from tray.
+Uses https://github.com/filabrazilska/xees for enabling and disabling.
+Uses my fork of systray-rs (https://github.com/filabrazilska/systray-rs/)
+that allows to call custom functions from the main application event loop.
