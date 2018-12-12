@@ -33,17 +33,9 @@ fn main() {
         window.quit();
     }).ok();
 
-    if is_screensaver_enabled() {
-        app.set_icon_from_file(&"./resources/eye_closed.png".to_string()).ok();
-    } else {
-        app.set_icon_from_file(&"./resources/eye_open.png".to_string()).ok();
-    }
+    update_icon_and_tooltip(&mut app);
     app.set_loop_callback(Box::new(|a : &mut systray::Application| {
-        if is_screensaver_enabled() {
-            a.set_icon_from_file(&"./resources/eye_closed.png".to_string()).ok();
-        } else {
-            a.set_icon_from_file(&"./resources/eye_open.png".to_string()).ok();
-        }
+        update_icon_and_tooltip(a);
     }));
 
     app.wait_for_message();
@@ -56,26 +48,47 @@ fn disable(period : Option<u64>) {
     if let Some(seconds) = period {
         m = m.append1(seconds);
     }
-    connection.send_with_reply_and_block(m, 2000).unwrap();
+    let _ = connection.send_with_reply_and_block(m, 2000);
 }
 
 fn enable() {
     let connection = Connection::get_private(BusType::Session).unwrap();
     let m = Message::new_method_call("net.andresovi.xees", "/", "net.andresovi.xees", "Enable")
         .unwrap();
-    connection.send_with_reply_and_block(m, 2000).unwrap();
+    let _ = connection.send_with_reply_and_block(m, 2000);
 }
 
-fn is_screensaver_enabled() -> bool {
+fn is_screensaver_enabled() -> Result<bool,()> {
     let connection = Connection::get_private(BusType::Session).unwrap();
     let m = Message::new_method_call("net.andresovi.xees", "/", "net.andresovi.xees", "Status")
         .unwrap();
-    match connection.send_with_reply_and_block(m, 2000).unwrap().get1() {
-        Some("Disabled") => {
-            false
+    match connection.send_with_reply_and_block(m, 2000) {
+        Ok(result) => {
+            match result.get1() {
+                Some("Disabled") => {
+                    Ok(false)
+                }
+                _ => {
+                    Ok(true) // by default assume that screensaver runs
+                }
+            }
         }
-        _ => {
-            true // by default assume that screensaver runs
+        Err(_) => Err(())
+    }
+}
+
+fn update_icon_and_tooltip(app : &mut systray::Application) {
+    match is_screensaver_enabled() {
+        Err(_) => {
+            app.set_icon_from_file(&"./resources/eye_scratched.png".to_string()).ok();
+        }
+        Ok(true) => {
+            app.set_icon_from_file(&"./resources/eye_closed.png".to_string()).ok();
+        }
+        Ok(false) => {
+            app.set_icon_from_file(&"./resources/eye_open.png".to_string()).ok();
         }
     }
 }
+
+
