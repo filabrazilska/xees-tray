@@ -28,6 +28,9 @@ fn main() {
     app.add_menu_item(&"Enable".to_string(), |_| {
         enable();
     }).ok();
+    app.add_menu_item(&"Activate".to_string(), |_| {
+        activate();
+    }).ok();
     app.add_menu_separator().ok();
     app.add_menu_item(&"Quit".to_string(), |window| {
         window.quit();
@@ -54,6 +57,13 @@ fn disable(period : Option<u64>) {
 fn enable() {
     let connection = Connection::get_private(BusType::Session).unwrap();
     let m = Message::new_method_call("net.andresovi.xees", "/", "net.andresovi.xees", "Enable")
+        .unwrap();
+    let _ = connection.send_with_reply_and_block(m, 2000);
+}
+
+fn activate() {
+    let connection = Connection::get_private(BusType::Session).unwrap();
+    let m = Message::new_method_call("net.andresovi.xees", "/", "net.andresovi.xees", "Activate")
         .unwrap();
     let _ = connection.send_with_reply_and_block(m, 2000);
 }
