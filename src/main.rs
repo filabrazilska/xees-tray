@@ -68,7 +68,13 @@ fn activate() {
     let _ = connection.send_with_reply_and_block(m, 2000);
 }
 
-fn is_screensaver_enabled() -> Result<bool,()> {
+enum ScreenSaverStatus {
+    Running,
+    Disabled,
+    Stopped,
+}
+
+fn is_screensaver_enabled() -> Result<ScreenSaverStatus,()> {
     let connection = Connection::get_private(BusType::Session).unwrap();
     let m = Message::new_method_call("net.andresovi.xees", "/", "net.andresovi.xees", "Status")
         .unwrap();
@@ -76,10 +82,13 @@ fn is_screensaver_enabled() -> Result<bool,()> {
         Ok(result) => {
             match result.get1() {
                 Some("Disabled") => {
-                    Ok(false)
+                    Ok(ScreenSaverStatus::Disabled)
+                }
+                Some("Stopped") => {
+                    Ok(ScreenSaverStatus::Stopped)
                 }
                 _ => {
-                    Ok(true) // by default assume that screensaver runs
+                    Ok(ScreenSaverStatus::Running) // by default assume that screensaver runs
                 }
             }
         }
@@ -92,10 +101,13 @@ fn update_icon_and_tooltip(app : &mut systray::Application) {
         Err(_) => {
             app.set_icon_from_file(&"./resources/eye_scratched.png".to_string()).ok();
         }
-        Ok(true) => {
+        Ok(ScreenSaverStatus::Stopped) => {
+            app.set_icon_from_file(&"./resources/eye_scratched.png".to_string()).ok();
+        }
+        Ok(ScreenSaverStatus::Running) => {
             app.set_icon_from_file(&"./resources/eye_closed.png".to_string()).ok();
         }
-        Ok(false) => {
+        Ok(ScreenSaverStatus::Disabled) => {
             app.set_icon_from_file(&"./resources/eye_open.png".to_string()).ok();
         }
     }
